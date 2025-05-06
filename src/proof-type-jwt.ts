@@ -65,7 +65,7 @@ export class ProofTypeJWT<
     generateProof(verifiableObject: D, issuer?: Issuer|EthrDID, options?: CreatePresentationOptions): Promise<string> {
         if (!issuer) issuer = this.issuer;
         if (!issuer) throw new Error("missing_issuer: No issuer has been configured");
-        if (this.is_presentation) return createVerifiablePresentationJwt(verifiableObject as any, issuer as Issuer, options)
+        if (this.is_presentation) return createVerifiablePresentationJwt(verifiableObject as any, issuer as Issuer, {...options, header: {kid: verifiableObject.iss||verifiableObject.issuer||this.issuer?.did, ...options?.header}})
         return createVerifiableCredentialJwt(verifiableObject as any, issuer as Issuer, {...options, header: {kid: verifiableObject.iss||verifiableObject.issuer, ...options?.header}})
     }
 

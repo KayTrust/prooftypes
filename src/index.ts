@@ -1,3 +1,4 @@
+export { Issuer } from '@kaytrust/did-base'
 import {JwtCredentialPayload} from 'did-jwt-vc'
 export {ProofTypeJWT, ResolverOrOptions} from './proof-type-jwt'
 export {ProofType} from './proof-type'

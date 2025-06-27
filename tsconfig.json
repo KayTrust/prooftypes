@@ -108,5 +108,5 @@
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
   // "include": ["src/**/*", "__tests__",  ],
-  "exclude": ["node_modules", "dist", "lib"]
+  "exclude": ["node_modules", "dist", "lib", "vitest.config.ts"]
 }

@@ -1,62 +1,97 @@
 # @kaytrust/prooftypes
 
-Create and verify W3C Verifiable Credentials and Presentations in JWT format (for only supported `JwtProof2020`)
+`@kaytrust/prooftypes` is a library that allows the creation and verification of [W3C Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) and Presentations in JWT format, using the `JwtProof2020` proof type.
+
+## Features
+
+- **Creation of Verifiable Credentials (VC)** in JWT format.
+- **Creation of Verifiable Presentations (VP)** in JWT format.
+- **Verification of VC and VP** using DID-compatible resolvers.
+- **Support for multiple DID methods**, such as `did:near` and `did:ethr`.
+
+---
 
 ## Installation
 
-```
+You can install the library using `npm` or `yarn`:
+
+```bash
 npm install @kaytrust/prooftypes
 # or
 yarn add @kaytrust/prooftypes
 ```
 
-## Usage JwtProof2020 proof type
+---
 
-`ProofTypeJWT` is a class that allows to generate and verify jwt proof
+## Usage
 
-### Constructor
+### Introduction
+
+The library provides the `ProofTypeJWT` class to handle the creation and verification of proofs in JWT format. Below are the steps required to use it.
+
+---
+
+### Initial Configuration
+
+#### `ProofTypeJWT` Constructor
 
 ```typescript
 constructor(options: ProofTypeJWTConfig = {}, is_presentation?: boolean)
+```
 
+- **`ProofTypeJWTConfig`**: Optional configuration for the issuer (`Issuer`) or verification options (`resolver` and `verifyOptions`).
+- **`is_presentation`**: If `true`, it will work with Verifiable Presentations; otherwise, it will work with Verifiable Credentials.
+
+##### `ProofTypeJWTConfig` Type
+
+```typescript
 type ProofTypeJWTConfig = {
-    issuer?: Issuer,
-    resolver?: ResolverOrOptions,
-    verifyOptions?: VerifyOptions,
+    issuer?: Issuer, // Issuer to sign JWTs
+    resolver?: ResolverOrOptions, // Resolver to verify JWTs
+    verifyOptions?: VerifyOptions, // Additional verification options
 }
 ```
 
-- `ProofTypeJWTConfig`: to configure a signer (`Issuer`) or verification options (`resolver` and `verifyOptions`)
-- `is_presentation`: If it is `true` it is because you want to work with Verifiable Presentations, otherwise it is assumed that you will work with Verifiable Credentials
+---
 
 ### Creating JWTs
 
 #### Prerequisites
 
-Create an `Issuer` (defined in [did-base](https://github.com/KayTrust/did-base)) object to sign JWTs using, for example [NearDID](https://github.com/KayTrust/did-near) or [EthrDID](https://github.com/KayTrust/did-ethr) are `Issuer`
+Before creating a JWT, you need to configure an `Issuer` object to sign the JWTs. You can use libraries such as [`@kaytrust/did-near`](https://github.com/KayTrust/did-near) or [`@kaytrust/did-ethr`](https://github.com/KayTrust/did-ethr).
+
+##### Example of Configuring an `Issuer`
 
 ```typescript
 import { NearDID } from '@kaytrust/did-near'
 import { EthrDID } from '@kaytrust/did-ethr'
 
+// NearDID Configuration
 const issuer = new NearDID({
-    privateKey: 'd8b595680851765f38ea5405129244ba3cbad84467d190859f4c8b20c1ff6c75',
-    identifier: 'alice.near', // optional
+    privateKey: 'YOUR_PRIVATE_KEY',
+    identifier: 'alice.near', // Optional
 })
 
+// EthrDID Configuration
 const issuerEthr = new EthrDID({
-    identifier: '0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198', // required
-    privateKey: 'd8b595680851765f38ea5405129244ba3cbad84467d190859f4c8b20c1ff6c75'
+    identifier: '0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198', // Required
+    privateKey: 'YOUR_PRIVATE_KEY'
 })
 ```
 
-The `Issuer` object must contain a `did` attribute, an `alg` property that is used in the JWT header and a `signer`
-function to generate the signature.
+The `Issuer` object includes:
+- **`did`**: Identifier of the issuer.
+- **`alg`**: Algorithm used in the JWT header.
+- **`signer`**: Function to generate the signature.
 
-#### Creating a Verifiable Credential
+---
 
-Specify a `payload` matching the `CredentialPayload` or `JwtCredentialPayload` interfaces. Create a JWT by signing it
-with the previously configured `issuer` using the `ProofTypeJWT.generateProof` method:
+#### Creating a Verifiable Credential (VC)
+
+1. Define the credential payload following the `JwtCredentialPayload` interface.
+2. Use the `generateProof` method of the `ProofTypeJWT` class to generate the JWT.
+
+##### Example
 
 ```typescript
 import { JwtCredentialPayload, ProofTypeJWT } from '@kaytrust/prooftypes'
@@ -76,17 +111,18 @@ const vcPayload: JwtCredentialPayload = {
   }
 }
 
-const proofTypeJwtCredential = new ProofTypeJWT({issuer})
+const proofTypeJwtCredential = new ProofTypeJWT({ issuer })
 const vcJwt = await proofTypeJwtCredential.generateProof(vcPayload)
 console.log(vcJwt)
 // eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NkstUiJ9.eyJpYXQi...0CQmqB14NnN5XxD0d_glLRs1Myc_LBJjnuNwE
 ```
 
-#### Creating a Verifiable Presentation
+#### Creating a Verifiable Presentation (VP)
 
-Specify a `payload` matching the `PresentationPayload` or `JwtPresentationPayload` interfaces, including the VC JWTs to
-be presented in the `vp.verifiableCredential` array. Create a JWT by signing it with the previously configured `issuer`
-using the `ProofTypeJWT.generateProof` method and setting `true` the `is_presentation` parameter when creates a `ProofTypeJWT` instance:
+1. Define the presentation payload following the `JwtPresentationPayload` interface.
+2. Use the `generateProof` method of the `ProofTypeJWT` class, setting the `is_presentation` parameter to `true`.
+
+##### Example
 
 ```typescript
 import { JwtPresentationPayload, ProofTypeJWT } from '@kaytrust/prooftypes'
@@ -99,29 +135,26 @@ const vpPayload: JwtPresentationPayload = {
   }
 }
 
-
-const proofTypeJwtCredential = new ProofTypeJWT({issuer}, true)
-const vcJwt = await proofTypeJwtCredential.generateProof(vcPayload)
+const proofTypeJwtPresentation = new ProofTypeJWT({ issuer }, true)
+const vpJwt = await proofTypeJwtPresentation.generateProof(vpPayload)
 console.log(vpJwt)
 // eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NkstUiJ9.eyJpYXQiOjE1ODI1NDc...JNMUzZ6naacuWNGdZGuU0ZDwmgpUMUqIzMqFFRmge0R8QA
 ```
+
+---
 
 ### Verifying JWTs
 
 #### Prerequisites
 
-Create a `Resolver`. When verifying a JWT signed by a DID,
-it is necessary to resolve its DID Document to check for keys that can validate the signature. 
-using [did-resolver](https://github.com/decentralized-identity/did-resolver). 
+To verify a JWT, you need a resolver that can resolve DID documents. You can use [`did-resolver`](https://github.com/decentralized-identity/did-resolver) with specific resolvers such as `did:near` or `did:ethr`.
 
-##### Resolver example
-
-With multiple resolvers (`did:near` and `did:ethr`)
+##### Example of Configuring a Resolver
 
 ```typescript
 import { ResolverOrOptions } from '@kaytrust/prooftypes'
 import { Resolver } from 'did-resolver'
-import { getResolver as getNearResolver } from '@kaytrust/did-near-resolver';
+import { getResolver as getNearResolver } from '@kaytrust/did-near-resolver'
 import ethr from 'ethr-did-resolver'
 
 const nearResolver = getNearResolver()
@@ -132,14 +165,13 @@ const resolver:ResolverOrOptions = new Resolver({
     ...nearResolver,
     ...ethrResolver,
 })
-
 //If you are using one method you can simply pass the result of getResolver( into the constructor
 const resolver:ResolverOrOptions = new Resolver(nearResolver);
 ```
 
-##### EthrDID resolver options example
+##### EthrDID **resolver options** example
 
-Setting resolver options for [ethr-did-resolver](https://github.com/decentralized-identity/ethr-did-resolver)
+Setting **resolver options** for [ethr-did-resolver](https://github.com/decentralized-identity/ethr-did-resolver)
 
 ```typescript
 import { ResolverOrOptions, ProofTypeJWT } from '@kaytrust/prooftypes'
@@ -149,134 +181,48 @@ const AMOY_CHAIN_ID = 80002;
 const resolver:ResolverOrOptions = {registry: '0xBC56d0883ef228b2B16420E9002Ece0A46c893F8', rpcUrl: RPC_AMOY, chainId: AMOY_CHAIN_ID}
 ```
 
-#### Verifying a Verifiable Credential
 
-Pass in a VC JWT along with the resolver to verify using the `ProofTypeJWT.verifyProof` method:
+---
 
-```typescript
-import { ProofTypeJWT } from '@kaytrust/prooftypes'
+#### Verifying a Verifiable Credential (VC)
 
-const proofTypeJwtCredential = new ProofTypeJWT({resolver})
-const verifiedVC = await proofTypeJwtCredential.verifyProof(vcJwt)
-console.log(verifiedVC)
-/*
-{
-  "payload": {
-    // the original payload of the signed credential
-  },
-  "doc": {
-    // the DID document of the credential issuer (as returned by the `resolver`)
-  },
-  "issuer": "did:ethr:0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198", //the credential issuer
-  "signer": {
-    //the publicKey entry of the `doc` that has signed the credential
-  },
-  "jwt": "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NkstUiJ9.eyJpYXQiOjE1NjY...Sx3Y2IdWaUpatJQA", // the original credential
-  
-  //parsed payload aligned to the W3C data model
-  "verifiableCredential": {
-    "@context": [Array],
-    "type": [ "VerifiableCredential", "UniversityDegreeCredential" ],
-    "issuer": {
-      "id": "did:ethr:0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198"
-    },
-    "issuanceDate": "2019-07-12T16:51:22.000Z",
-    "credentialSubject": {
-      "id": "did:ethr:0x435df3eda57154cf8cf7926079881f2912f54db4"
-      "degree": {
-        "type": "BachelorDegree",
-        "name": "Baccalauréat en musiques numériques"
-      },
-    },
-    "proof": {
-      //  proof type for internal use, NOT a registered vc-data-model type
-      "type": "JwtProof2020",
-      "jwt": "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NkstUiJ9.eyJpYXQiOjE1NjY...Sx3Y2IdWaUpatJQA"
-    }
-  }
-}
-*/
-```
+Use the `verifyProof` method of the `ProofTypeJWT` class to verify the JWT.
 
-#### Verifying a Verifiable Presentation
-
-Pass in a VP JWT along with the resolver to verify using the `ProofTypeJWT.verifyProof` method and setting `true` the `is_presentation` parameter when creates a `ProofTypeJWT` instance:
+##### Example
 
 ```typescript
 import { ProofTypeJWT } from '@kaytrust/prooftypes'
 
-const proofTypeJwtCredential = new ProofTypeJWT({resolver}, true)
+const proofTypeJwtCredential = new ProofTypeJWT({ resolver })
 const verifiedVC = await proofTypeJwtCredential.verifyProof(vcJwt)
 console.log(verifiedVC)
-/*
-{
-  //original JWT payload
-  payload: {
-    iat: 1568045263,
-    vp: {
-      '@context': [Array],
-      type: ['VerifiablePresentation'],
-      verifiableCredential: [
-        'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NkstUiJ9.eyJpYXQiOjE1NjY5...lpNm51cqSx3Y2IdWaUpatJQA'
-      ]
-    },
-    iss: 'did:ethr:0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198'
-  },
-  
-  doc: {
-    // the DID document of the presentation issuer (as returned by the `resolver`)
-  },
-  
-  signer: {
-    //the publicKey entry of the `doc` that has signed the presentation
-  },
-  
-  issuer: 'did:ethr:0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198',
-
-  jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NkstUiJ9.eyJpYXQiOjE1NjgwNDUyNjMsInZwIjp7...ViNNCvoTQ-swSHwbELW7-EGPAcHLOMiIwE',
-
-  // parsed payload aligned to the W3C data model
-  verifiablePresentation: {
-    verifiableCredential: [
-      {
-        iat: 1566923269,
-        credentialSubject: {
-          degree: { type: 'BachelorDegree', name: 'Baccalauréat en musiques numériques' },
-          id: 'did:ethr:0x435df3eda57154cf8cf7926079881f2912f54db4'
-        },
-        issuer: { id: 'did:ethr:0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198' },
-        type: ['VerifiableCredential', 'UniversityDegreeCredential'],
-        '@context': [Array],
-        issuanceDate: '2019-07-12T16:51:22.000Z',
-        proof: {
-          type: 'JwtProof2020',
-          jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NkstUiJ9.eyJpYXQiOjE1NjY5...lpNm51cqSx3Y2IdWaUpatJQA'
-        }
-      }
-    ],
-    holder: 'did:ethr:0xf1232f840f3ad7d23fcdaa84d6c66dac24efb198',
-    type: ['VerifiablePresentation'],
-    '@context': [Array],
-    issuanceDate: '2019-09-09T16:07:43.000Z',
-    proof: {
-      // proof type for internal use, NOT a registered W3C vc-data-model proof type
-      type: 'JwtProof2020',
-      jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NkstUiJ9.eyJpYXQiOjE1NjgwNDUyNjMsInZwI...ViNNCvoTQ-swSHwbELW7-EGPAcHLOMiIwE'
-    }
-  }
-}
-*/
 ```
 
-#### Notes on verification and proof properties
+---
 
-The result of the verification methods, when successful, also conveniently contain the decoded and parsed payloads, in a
-format that closely matches the [W3C data model](https://www.w3.org/TR/vc-data-model/) for verifiable credentials and
-presentations. This makes it easier to work with both credential encodings in the same system. This parsed payload also
-shows a `proof` property that lists the full JWT credential or presentation.
+#### Verifying a Verifiable Presentation (VP)
 
-The `JwtProof2020` is a synthetic proof type, usable for differentiating credentials by type. It is not a registered W3C
-VC Data Model algorithm and should not be treated as such.
+Use the `verifyProof` method of the `ProofTypeJWT` class, setting the `is_presentation` parameter to `true`.
 
-Also note that the `@context` fields that appear in this parsed payload are the same as the ones in the incoming JWT.
-This means that the parsed payload will probably not be suitable for an LD-processor.
+##### Example
+
+```typescript
+import { ProofTypeJWT } from '@kaytrust/prooftypes'
+
+const proofTypeJwtPresentation = new ProofTypeJWT({ resolver }, true)
+const verifiedVP = await proofTypeJwtPresentation.verifyProof(vpJwt)
+console.log(verifiedVP)
+```
+
+---
+
+## Additional Notes
+
+- The `JwtProof2020` proof type is a synthetic type for internal use and is not registered in the W3C data model.
+- Verified payloads are aligned with the W3C data model, making them easier to use in systems that handle multiple credential formats.
+
+---
+
+## Contributions
+
+If you want to contribute to this project, please open an [issue](https://github.com/KayTrust/prooftypes/issues) or submit a pull request.

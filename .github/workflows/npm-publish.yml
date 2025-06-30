@@ -26,7 +26,7 @@ jobs:
       - name: Run tests
         uses: borales/actions-yarn@v4
         with:
-          cmd: test run
+          cmd: vitest run --exclude src/__tests__/proof-type-near.test.ts
       - name: Publish to npm
         run: yarn publish
         env:

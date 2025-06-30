@@ -3,11 +3,19 @@ import { CredentialPayload, JwtCredentialPayload } from 'did-jwt-vc';
 import { connect, keyStores, WalletConnection } from 'near-api-js';
 import { ProofType } from './proof-type';
 
+type ProofTypeNearConfig = {
+    networkId: 'testnet' | 'mainnet'
+    nodeUrl: string
+    walletUrl: string
+    helperUrl: string
+    keyStore: keyStores.InMemoryKeyStore
+}
+
 export class ProofTypeNear implements ProofType {
   readonly proofType = 'NearAttestationRegistry2025';
   static PROOF_TYPE: string = 'NearAttestationRegistry2025';
 
-  private config = {
+  private config: ProofTypeNearConfig = {
     networkId: 'testnet',
     nodeUrl: 'https://rpc.testnet.near.org',
     walletUrl: 'https://testnet.mynearwallet.com',
@@ -15,7 +23,12 @@ export class ProofTypeNear implements ProofType {
     keyStore: new keyStores.InMemoryKeyStore(),
   };
 
-  private contractId = 'neardtiprooftype.testnet';
+  private contractId: string = 'neardtiprooftype.testnet';
+
+  constructor(contractId?: string, config?: ProofTypeNearConfig) {
+    if (contractId) this.contractId = contractId;
+    if (config) this.config = config;
+  }
 
   async generateProof(verifiableObject: JwtCredentialPayload | CredentialPayload, extra?: { wallet: WalletConnection, cid: string }) {
     if (!extra?.wallet || !extra?.cid || !verifiableObject.issuer) {
@@ -44,7 +57,7 @@ export class ProofTypeNear implements ProofType {
 
   async verifyProof(verifiableObjectWithProof: string): Promise<boolean> {
     const near = await connect(this.config);
-    const account = await near.account('nearprooftype.testnet');
+    const account = await near.account(this.contractId);
 
     const parts = verifiableObjectWithProof.split('|');
     const subjectDid = parts[0];

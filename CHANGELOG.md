@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.10](https://github.com/KayTrust/prooftypes/compare/v0.1.9...v0.1.10) (2025-06-30)
+
+
+### Features
+
+* added near prooftype ([c85a4d6](https://github.com/KayTrust/prooftypes/commit/c85a4d6864fee243b9d18d42c68a13191d8c5f50))
+
 ### [0.1.9](https://github.com/KayTrust/prooftypes/compare/v0.1.5...v0.1.9) (2025-06-27)
 
 ### [0.1.5](https://github.com/KayTrust/prooftypes/compare/v0.1.4...v0.1.5) (2025-05-06)

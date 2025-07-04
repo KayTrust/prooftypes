@@ -226,3 +226,60 @@ console.log(verifiedVP)
 ## Contributions
 
 If you want to contribute to this project, please open an [issue](https://github.com/KayTrust/prooftypes/issues) or submit a pull request.
+---
+
+## 🟣 ProofTypeNear
+
+This proof type allows you to register and verify verifiable credentials directly on the [NEAR](https://near.org) blockchain using a smart contract.
+
+### Contract
+
+- **Network**: testnet
+- **Contract ID**: `neardtiprooftype.testnet`
+- **CID**: The proof is the base64-encoded SHA-256 hash of the VC payload
+
+### Installation
+
+Make sure `near-api-js` is available in your project.
+
+```bash
+npm install near-api-js
+```
+
+### Usage
+
+```ts
+import { ProofTypeNear } from './proof-type-near';
+import { connect, keyStores, WalletConnection } from 'near-api-js';
+import CryptoJS from 'crypto-js';
+
+const proofType = new ProofTypeNear();
+const wallet: WalletConnection = /* your connected wallet */;
+const vcPayload = {
+  issuer: 'did:near:issuer.testnet',
+  credentialSubject: {
+    id: 'did:near:user.testnet',
+    name: 'Alice'
+  },
+  issuanceDate: new Date().toISOString(),
+  type: ['VerifiableCredential']
+};
+
+// Generate CID from VC payload
+const cid = CryptoJS.SHA256(JSON.stringify(vcPayload)).toString(CryptoJS.enc.Base64);
+
+// Generate on-chain proof
+const proof = await proofType.generateProof(vcPayload, {
+  wallet,
+  cid
+});
+
+// Verify
+const valid = await proofType.verifyProof(proof);
+console.log(valid); // true or false
+```
+
+### Notes
+
+- The contract only allows a `(did, cid)` pair to be used once.
+- The proof is linked to the NEAR account that issues the credential.
